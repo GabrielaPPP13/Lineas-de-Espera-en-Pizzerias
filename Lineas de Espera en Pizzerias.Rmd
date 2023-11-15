@@ -1,0 +1,506 @@
+---
+title: "Lineas de Espera en Pizzerías"
+author: "Equipo 6"
+date: "2023-11-10"
+output:
+  word_document: default
+  pdf_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r include=FALSE}
+# Cargar librería
+library(queueing)
+```
+
+**Planteamiento:**
+
+En el análisis exhaustivo del rendimiento de dos destacadas pizzerías, se destaca que Little Caesars experimenta un flujo constante de aproximadamente 35 clientes por hora, mientras que Pizza Hut, aunque reconocida, recibe alrededor de 22 clientes en el mismo intervalo de tiempo. Esta disparidad en la tasa de llegada de clientes subraya claramente la variabilidad en la demanda entre ambas cadenas de pizzerías.
+
+En términos de eficiencia del servicio, Little Caesars muestra un tiempo de espera promedio de 10 minutos para sus clientes. En contraste, Pizza Hut presenta un tiempo de espera promedio de 17 minutos.
+
+Estos datos identifican áreas específicas de oportunidad para la mejora continua en ambas pizzerías, ya que la gestión eficaz de las colas y la reducción de los tiempos de espera son componentes críticos para asegurar una experiencia satisfactoria para los clientes. El análisis detallado de estos indicadores proporciona una base sólida para la implementación de estrategias destinadas a optimizar la eficiencia operativa y elevar la calidad del servicio en ambas pizzerías.
+
+1.	¿Cuál es el sistema de líneas de espera que se está modelando?
+
+**Estamos modelando un sistema de líneas de espera de pizzerías**
+
+2.	¿Qué tipo de comportamiento presentan las llegadas de los clientes?
+
+**Las llegadas de clientes siguen un proceso de Poisson, ya que se menciona que Little Caesars recibe un promedio de 35 clientes por hora y Pizza Hut recibe alrededor de 22 clientes por hora. Ambas tasas de llegada se ajustan a un proceso de Poisson.**
+
+3.	¿Qué tipo de comportamiento presenta el tiempo de servicio?
+
+**El tiempo de servicio sigue una distribución exponencial, markoviana, ya que se menciona el tiempo de espera promedio para cada pizzería.**
+
+4.	¿Cuáles y cuántos son los servidores?
+
+**Para cada pizzería, hay un solo servidor**
+
+5.	¿Cuál es el modelo de líneas de espera que representa mejor este problema (utilice la notación estándar de Kendall-Lee)?
+
+**(M/M/1:FIFO/$\infty$/$\infty$/)**
+
+6.	¿Cuáles son los valores de $\lambda$ y $\mu$?
+
+Para Little Caesars:
+
+**$\lambda_{LC} = 35$ clientes/hora**
+
+**$\mu_{LC} = 1 / (10/60)$ clientes/minuto (convertido de 6 minutos a horas)**
+
+Para Pizza Hut:
+
+**$\lambda_{PH} = 22$ clientes/hora**
+**$\mu_{PH} = 1 / (17/60)$ clientes/minuto (convertido de 10 minutos a horas)**
+
+
+**Modelo: **
+```{r}
+# Datos para Little Caesars (LC)
+lambda_lc <- 35 / 60  # Tasa de llegada en clientes por minuto
+mu_lc <- 1 / (10/60)   # Tasa de servicio en clientes por minuto (ajustado para equilibrar el sistema)
+servers_lc <- 1       # Número de servidores
+
+# Datos para Pizza Hut (PH)
+lambda_ph <- 22 / 60   # Tasa de llegada en clientes por minuto
+mu_ph <- 1 / (17/60)  # Tasa de servicio en clientes por minuto (ajustado para equilibrar el sistema)
+servers_ph <- 1       # Número de servidores
+
+# Modelos M/M/1
+lc_model <- NewInput.MMC(lambda_lc, mu_lc, servers_lc)
+ph_model <- NewInput.MMC(lambda_ph, mu_ph, servers_ph)
+
+# Resultados
+lc_results <- QueueingModel(lc_model)
+ph_results <- QueueingModel(ph_model)
+
+summary(lc_results)
+summary(ph_results)
+
+```
+
+
+**Preguntas**
+
+1.	¿Cuántos servidores son necesarios para minimizar la cola y el tiempo de espera?
+
+```{r}
+# Número de servidores para M/M/c
+servers_c_lc <- 2  
+servers_c_ph <- 2  
+
+# Modelos M/M/c
+lc_model_c <- NewInput.MM1(lambda_lc, mu_lc, servers_c_lc)
+ph_model_c <- NewInput.MM1(lambda_ph, mu_ph, servers_c_ph)
+
+# Resultados para M/M/c
+lc_results_c <- QueueingModel(lc_model_c)
+ph_results_c <- QueueingModel(ph_model_c)
+
+# Resumen de resultados
+summary(lc_results_c)
+summary(ph_results_c)
+
+```
+```{r}
+# Número de servidores para M/M/c
+servers_c_lc <- 3  
+servers_c_ph <- 3  
+
+# Modelos M/M/c
+lc_model_c <- NewInput.MM1(lambda_lc, mu_lc, servers_c_lc)
+ph_model_c <- NewInput.MM1(lambda_ph, mu_ph, servers_c_ph)
+
+# Resultados para M/M/c
+lc_results_c <- QueueingModel(lc_model_c)
+ph_results_c <- QueueingModel(ph_model_c)
+
+# Resumen de resultados
+summary(lc_results_c)
+summary(ph_results_c)
+
+```
+**Para ambos casos (Little Caesars y Pizza Hut), la adición de más servidores no parece tener un impacto significativo en el rendimiento según las métricas proporcionadas.**
+
+**El tiempo de espera es bastante bajo en ambos modelos, indicando una eficiencia razonable.**
+
+2.	¿Cuál es la probabilidad de que no haya clientes en cola en un momento dado?
+
+Little Caesars (LC):
+
+**Probabilidad de que no haya clientes en cola (P0): 0.9027778**
+
+Pizza Hut (PH):
+
+**Probabilidad de que no haya clientes en cola (P0): 0.8961111**
+
+**Estos valores indican que, en ambos casos, hay una alta probabilidad de que no haya clientes en cola en un momento dado, lo que sugiere que ambos sistemas están manejando eficientemente la demanda.**
+
+3.	¿Cómo se ve afectado el rendimiento del sistema si se incrementa aún más el número de servidores?
+
+```{r}
+# Número de servidores para M/M/c
+servers_c_lc <- 4  
+servers_c_ph <- 4 
+
+# Modelos M/M/c
+lc_model_c <- NewInput.MM1(lambda_lc, mu_lc, servers_c_lc)
+ph_model_c <- NewInput.MM1(lambda_ph, mu_ph, servers_c_ph)
+
+# Resultados para M/M/c
+lc_results_c <- QueueingModel(lc_model_c)
+ph_results_c <- QueueingModel(ph_model_c)
+
+# Resumen de resultados
+summary(lc_results_c)
+summary(ph_results_c)
+```
+**Los resultados también son similares a las configuraciones anteriores, indicando que agregar un cuarto servidor tampoco ha tenido un impacto significativo en las métricas de rendimiento.**
+
+4. ¿Existe un punto de saturación en el que agregar más servidores no mejora significativamente la eficiencia del sistema?
+
+**El rendimiento del sistema no mejora significativamente al aumentar el número de servidores. La eficiencia y el tiempo de espera son relativamente constantes, lo que sugiere que 2 servidores ya son suficientes para manejar la carga de trabajo y agregar más servidores no proporciona beneficios significativos en términos de las métricas analizadas.**
+
+5. ¿Cómo cambian las métricas de rendimiento (tiempo de espera, probabilidad de no haber clientes en cola) si las tasas de llegada y servicio son ajustadas hacia arriba o hacia abajo?
+
+**Ajuste hacia arriba de las tasas de llegada y servicio:**
+```{r}
+# Ajuste hacia arriba de las tasas de llegada y servicio
+lambda_lc_up <- 40 / 60  # Nueva tasa de llegada para Little Caesars
+mu_lc_up <- 1 / (9/60)   # Nueva tasa de servicio para Little Caesars
+
+lambda_ph_up <- 25 / 60  # Nueva tasa de llegada para Pizza Hut
+mu_ph_up <- 1 / (15/60)  # Nueva tasa de servicio para Pizza Hut
+
+# Modelos M/M/1 con tasas de llegada y servicio aumentadas
+lc_model_up <- NewInput.MMC(lambda_lc_up, mu_lc_up, servers_lc)
+ph_model_up <- NewInput.MMC(lambda_ph_up, mu_ph_up, servers_ph)
+
+# Resultados
+lc_results_up <- QueueingModel(lc_model_up)
+ph_results_up <- QueueingModel(ph_model_up)
+
+# Resumen de resultados
+summary(lc_results_up)
+summary(ph_results_up)
+
+```
+Little Caesars (LC):
+
+**Tasa de llegada aumentada (lambda_lc_up): 40 clientes por hora.**
+
+**Tasa de servicio aumentada (mu_lc_up): 9 clientes por hora.**
+
+**Número de servidores: 1.**
+
+Resultados:
+
+**Ro (utilización promedio del servidor): 0.1 (10%).**
+
+**P0 (probabilidad de que no haya clientes en el sistema): 0.9 (90%).**
+
+**Lq (clientes en cola promedio): 0.01111111 clientes.**
+
+**Wq (tiempo de espera en cola promedio): 0.01666667 horas.**
+
+**X (clientes atendidos por hora): 0.6666667 clientes.**
+
+**L (clientes en el sistema promedio): 0.1111111 clientes.**
+
+
+Pizza Hut (PH):
+
+**Tasa de llegada aumentada (lambda_ph_up): 25 clientes por hora.**
+
+**Tasa de servicio aumentada (mu_ph_up): 15 clientes por hora.**
+
+**Número de servidores: 1.**
+
+Resultados:
+
+**Ro (utilización promedio del servidor): 0.1041667 (10.42%).**
+
+**P0 (probabilidad de que no haya clientes en el sistema): 0.8958333 (89.58%).**
+
+**Lq (clientes en cola promedio): 0.0121124 clientes.**
+
+**Wq (tiempo de espera en cola promedio): 0.02906977 horas.**
+
+**X (clientes atendidos por hora): 0.4166667 clientes.**
+
+**L (clientes en el sistema promedio): 0.1162791 clientes.**
+
+
+**Ajuste hacia abajo de las tasas de llegada y servicio:**
+```{r}
+# Ajuste hacia abajo de las tasas de llegada y servicio
+lambda_lc_down <- 30 / 60  # Nueva tasa de llegada para Little Caesars
+mu_lc_down <- 1 / (11/60)  # Nueva tasa de servicio para Little Caesars
+
+lambda_ph_down <- 18 / 60  # Nueva tasa de llegada para Pizza Hut
+mu_ph_down <- 1 / (20/60)  # Nueva tasa de servicio para Pizza Hut
+
+# Modelos M/M/1 con tasas de llegada y servicio disminuidas
+lc_model_down <- NewInput.MMC(lambda_lc_down, mu_lc_down, servers_lc)
+ph_model_down <- NewInput.MMC(lambda_ph_down, mu_ph_down, servers_ph)
+
+# Resultados
+lc_results_down <- QueueingModel(lc_model_down)
+ph_results_down <- QueueingModel(ph_model_down)
+
+# Resumen de resultados
+summary(lc_results_down)
+summary(ph_results_down)
+
+```
+Little Caesars (LC):
+
+**Tasa de llegada disminuida (lambda_lc_down): 30 clientes por hora.**
+
+**Tasa de servicio disminuida (mu_lc_down): 11 clientes por hora.**
+
+**Número de servidores: 1.**
+
+
+Resultados:
+
+**Ro (utilización promedio del servidor): 0.09166667 (9.17%).**
+
+**P0 (probabilidad de que no haya clientes en el sistema): 0.9083333 (90.83%).**
+
+**Lq (clientes en cola promedio): 0.009250765 clientes.**
+
+**Wq (tiempo de espera en cola promedio): 0.01850153 horas.**
+
+**X (clientes atendidos por hora): 0.5 clientes.**
+
+**L (clientes en el sistema promedio): 0.1009174 clientes.**
+
+
+Pizza Hut (PH):
+
+**Tasa de llegada disminuida (lambda_ph_down): 18 clientes por hora.**
+
+**Tasa de servicio disminuida (mu_ph_down): 20 clientes por hora.**
+
+**Número de servidores: 1.**
+
+Resultados:
+
+**Ro (utilización promedio del servidor): 0.1 (10%).**
+
+**P0 (probabilidad de que no haya clientes en el sistema): 0.9 (90%).**
+
+**Lq (clientes en cola promedio): 0.01111111 clientes.**
+
+**Wq (tiempo de espera en cola promedio): 0.03703704 horas.**
+
+**X (clientes atendidos por hora): 0.3 clientes.**
+
+**L (clientes en el sistema promedio): 0.1111111 clientes.**
+
+**En resumen, al ajustar las tasas de llegada y servicio hacia arriba, vemos un aumento en la utilización del servidor (Ro) y una disminución en la probabilidad de no haber clientes en el sistema (P0), lo que indica un sistema más ocupado. Por otro lado, al ajustar las tasas hacia abajo, observamos una disminución en la utilización del servidor y un aumento en la probabilidad de no haber clientes en el sistema, lo que indica un sistema menos ocupado. Estos cambios también afectan las métricas de tiempo de espera en cola (Wq) y clientes en cola (Lq).**
+
+6. ¿Cómo se comparan las eficiencias de Little Caesars y Pizza Hut en términos de tiempo de espera y probabilidad de no haber clientes en cola?
+
+Tiempo de espera en cola (Wq):
+
+**LC: 0.01794872 horas.**
+
+**PH: 0.0328477 horas.**
+
+**Little Caesars tiene un tiempo de espera en cola promedio más bajo que Pizza Hut en los resultados originales, indicando una mayor eficiencia en términos de tiempo de espera**
+
+
+Probabilidad de no haber clientes en cola (P0):
+
+**LC: 0.9027778 (90.28%).**
+
+**PH: 0.8961111 (89.61%).**
+
+**Little Caesars tiene una probabilidad ligeramente mayor de no tener clientes en cola en comparación con Pizza Hut en los resultados originales, lo que sugiere una eficiencia similar en este aspecto.**
+
+7. ¿Cuál es la tasa de llegada y servicio óptima para cada pizzería para maximizar la eficiencia del sistema?
+
+```{r}
+# Rango de tasas de llegada y servicio para explorar
+lambda_range <- seq(30/60, 40/60, by = 1/60)  # Ejemplo: de 30 a 40 clientes por hora con incrementos de 1
+mu_range <- seq(1/(11/60), 1/(9/60), by = 1/60)  # Ejemplo: de 11 a 9 minutos por cliente con decrementos de 1
+
+# Almacena los resultados
+results <- matrix(NA, nrow = length(lambda_range), ncol = length(mu_range))
+rownames(results) <- format(lambda_range, scientific = FALSE)
+colnames(results) <- format(mu_range, scientific = FALSE)
+
+# Iteración para evaluar diferentes combinaciones de tasas
+for (i in seq_along(lambda_range)) {
+  for (j in seq_along(mu_range)) {
+    lc_model_opt <- NewInput.MMC(lambda_range[i], mu_range[j], servers_lc)
+    ph_model_opt <- NewInput.MMC(lambda_range[i], mu_range[j], servers_ph)
+    
+    lc_results_opt <- QueueingModel(lc_model_opt)
+    ph_results_opt <- QueueingModel(ph_model_opt)
+    
+    # Almacena la eficiencia del sistema (puedes elegir otras métricas)
+    results[i, j] <- lc_results_opt$RO + ph_results_opt$RO
+  }
+}
+
+# Encuentra las tasas óptimas que maximizan la eficiencia
+max_indices <- which(results == max(results), arr.ind = TRUE)
+optimal_lambda <- lambda_range[max_indices[1, 1]]
+optimal_mu <- mu_range[max_indices[1, 2]]
+
+# Muestra los resultados
+cat("Tasas óptimas para maximizar la eficiencia del sistema:\n")
+cat("Tasa de llegada óptima:", optimal_lambda, "clientes por minuto\n")
+cat("Tasa de servicio óptima:", optimal_mu, "minutos por cliente\n")
+
+```
+
+
+
+
+8. ¿Cómo afectaría un aumento o disminución en la tasa de servicio al tiempo de espera y la probabilidad de no haber clientes en cola?
+
+```{r}
+# Simulación con aumento en la tasa de servicio
+mu_lc_high <- 1 / (8/60)  # Aumento en la tasa de servicio
+mu_lc_low <- 1 / (12/60)  # Disminución en la tasa de servicio
+
+# Modelos M/M/1 con tasas de servicio modificadas
+lc_model_high <- NewInput.MMC(lambda_lc, mu_lc_high, servers_lc)
+lc_model_low <- NewInput.MMC(lambda_lc, mu_lc_low, servers_lc)
+
+# Resultados para tasas de servicio más altas y más bajas
+lc_results_high <- QueueingModel(lc_model_high)
+lc_results_low <- QueueingModel(lc_model_low)
+
+# Resumen de resultados
+summary(lc_results_high)
+summary(lc_results_low)
+
+```
+Aumento en la tasa de servicio:
+
+**La tasa de servicio se aumentó, y puedes observar que la probabilidad de no haber clientes en cola (P0) aumentó a 0.9222222, lo que indica una mayor eficiencia.**
+
+**La longitud de la cola (Lq) y el tiempo de espera en la cola (Wq) disminuyeron significativamente, lo que sugiere un mejor rendimiento.**
+
+Disminución en la tasa de servicio:
+
+**La probabilidad de no haber clientes en cola (P0) disminuyó a 0.8833333, lo que indica una menor eficiencia en comparación con la tasa de servicio original.**
+
+**La longitud de la cola (Lq) y el tiempo de espera en la cola (Wq) aumentaron, lo que indica un peor rendimiento.**
+
+```{r}
+# Simulación con aumento en la tasa de servicio para Pizza Hut
+mu_ph_high <- 1 / (14/60)  # Ejemplo: Aumento en la tasa de servicio para Pizza Hut
+mu_ph_low <- 1 / (20/60)   # Ejemplo: Disminución en la tasa de servicio para Pizza Hut
+
+# Modelos M/M/1 con tasas de servicio modificadas para Pizza Hut
+ph_model_high <- NewInput.MMC(lambda_ph, mu_ph_high, servers_ph)
+ph_model_low <- NewInput.MMC(lambda_ph, mu_ph_low, servers_ph)
+
+# Resultados para tasas de servicio más altas y más bajas para Pizza Hut
+ph_results_high <- QueueingModel(ph_model_high)
+ph_results_low <- QueueingModel(ph_model_low)
+
+# Resumen de resultados para Pizza Hut
+summary(ph_results_high)
+summary(ph_results_low)
+
+```
+Aumento en la tasa de servicio:
+
+**La probabilidad de no haber clientes en cola (P0) aumentó a 0.9144444, lo que sugiere una mejora en la eficiencia.**
+
+**La longitud de la cola (Lq) y el tiempo de espera en la cola (Wq) disminuyeron, indicando un mejor rendimiento.**
+
+Disminución en la tasa de servicio:
+
+**La probabilidad de no haber clientes en cola (P0) disminuyó a 0.8777778, lo que indica una menor eficiencia en comparación con la tasa de servicio original.**
+
+**La longitud de la cola (Lq) y el tiempo de espera en la cola (Wq) aumentaron, sugiriendo un peor rendimiento.**
+
+9. ¿Cómo se comparan los resultados bajo diferentes escenarios de demanda, como horas pico y horas no pico?
+
+**Simulación de cambios en las tasas de llegada de clientes durante estos períodos.**
+
+```{r}
+# Tasas de llegada durante horas pico y horas no pico
+lambda_lc_peak <- 50 / 60  # Tasa de llegada durante horas pico para Little Caesars
+lambda_lc_off_peak <- 25 / 60  # Tasa de llegada durante horas no pico para Little Caesars
+
+lambda_ph_peak <- 35 / 60  # Tasa de llegada durante horas pico para Pizza Hut
+lambda_ph_off_peak <- 18 / 60  # Tasa de llegada durante horas no pico para Pizza Hut
+
+# Modelos M/M/1 para horas pico y horas no pico
+lc_model_peak <- NewInput.MMC(lambda_lc_peak, mu_lc, servers_lc)
+lc_model_off_peak <- NewInput.MMC(lambda_lc_off_peak, mu_lc, servers_lc)
+
+ph_model_peak <- NewInput.MMC(lambda_ph_peak, mu_ph, servers_ph)
+ph_model_off_peak <- NewInput.MMC(lambda_ph_off_peak, mu_ph, servers_ph)
+
+# Resultados para horas pico y horas no pico
+lc_results_peak <- QueueingModel(lc_model_peak)
+lc_results_off_peak <- QueueingModel(lc_model_off_peak)
+
+ph_results_peak <- QueueingModel(ph_model_peak)
+ph_results_off_peak <- QueueingModel(ph_model_off_peak)
+
+# Resumen de resultados
+summary(lc_results_peak)
+summary(lc_results_off_peak)
+
+summary(ph_results_peak)
+summary(ph_results_off_peak)
+
+```
+**Little Caesars durante horas pico:**
+
+Probabilidad de no haber clientes en cola (P0): 0.8611111
+
+Longitud promedio de la cola (Lq): 0.1612903
+
+Tiempo de espera promedio (Wq): 0.1935484
+
+Número promedio de clientes en el sistema (X): 0.8333333
+
+**Little Caesars durante horas no pico:**
+
+Probabilidad de no haber clientes en cola (P0): 0.9305556
+
+Longitud promedio de la cola (Lq): 0.07462687
+
+Tiempo de espera promedio (Wq): 0.1791045
+
+Número promedio de clientes en el sistema (X): 0.4166667
+
+**Pizza Hut durante horas pico:**
+
+Probabilidad de no haber clientes en cola (P0): 0.8347222
+
+Longitud promedio de la cola (Lq): 0.1980033
+
+Tiempo de espera promedio (Wq): 0.3394343
+
+Número promedio de clientes en el sistema (X): 0.5833333
+
+**Pizza Hut durante horas no pico:**
+
+Probabilidad de no haber clientes en cola (P0): 0.915
+
+Longitud promedio de la cola (Lq): 0.09289617
+
+Tiempo de espera promedio (Wq): 0.3096539
+
+Número promedio de clientes en el sistema (X): 0.3
+
+
+**Estos resultados indican cómo cambian las métricas de rendimiento durante horas pico y horas no pico para ambas pizzerías. Por ejemplo, durante horas pico, la probabilidad de que no haya clientes en cola disminuye, y la longitud promedio de la cola y el tiempo de espera aumentan. Estos cambios pueden deberse a un aumento en la demanda durante las horas pico. Durante horas no pico, se observa una mejora en estas métricas, indicando que el sistema es más eficiente cuando la demanda es menor.**
+
